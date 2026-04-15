@@ -2,9 +2,7 @@ version: "3.8"
 
 services:
   db:
-    build:
-      context: .
-      dockerfile: Dockerfile.mysql
+    image: mysql:8
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: "1234"
@@ -19,7 +17,7 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p1234"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   app:
     build:

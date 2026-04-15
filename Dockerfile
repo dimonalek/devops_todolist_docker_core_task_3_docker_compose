@@ -18,7 +18,11 @@ COPY --from=builder /app .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
+# Copy and prepare the DB-wait / entrypoint script
+COPY wait_for_db.sh /wait_for_db.sh
+RUN chmod +x /wait_for_db.sh
+
 EXPOSE 8080
 
-# Run database migrations and start the Django application
-ENTRYPOINT ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8080"]
+# Wait for MySQL, run migrations, then start the server
+ENTRYPOINT ["sh", "/wait_for_db.sh"]
