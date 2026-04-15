@@ -20,9 +20,9 @@ Todos are stored in the MySQL database. The data is persisted in a named Docker 
 
 ### How startup sequencing works
 
-The `db` service exposes a `healthcheck` that polls `mysqladmin ping` every 10 seconds (up to 10 retries). The `app` service has `depends_on: db: condition: service_healthy`.
+The `db` service exposes a `healthcheck` that polls `mysqladmin ping` every 10 seconds (up to 10 retries). The `app` service declares `depends_on: - db`, which ensures Docker starts the `db` container before `app`.
 
-> ⚠️ **Note:** `depends_on` with `condition: service_healthy` is supported in Compose v2 (`docker compose`) and Docker Compose v1.27+. In some older Compose v3 implementations it is ignored and the `app` container may start before MySQL is fully ready. To handle this reliably, the app container uses `wait_for_db.sh`, a lightweight shell loop that polls `mysqladmin ping` in a retry loop before running migrations and starting the server — so the application will always start correctly regardless of the Compose version.
+> ⚠️ **Note:** The simple `depends_on` list form does **not** wait for MySQL to be ready — only for the container to start. The real readiness gate is `wait_for_db.sh` inside the app container, which polls `mysqladmin ping` in a retry loop and only proceeds to run migrations and start the server once MySQL accepts connections. This approach works reliably across all Compose versions.
 
 ---
 
@@ -96,13 +96,15 @@ export MYSQL_PASSWORD=1234
 # 4. Apply database migrations
 python manage.py migrate
 
-# 5. Start the development server
-python manage.py runserver 0.0.0.0:8080
+# 5. Start the development server (Django's default port is 8000)
+python manage.py runserver
 ```
 
 The application will be accessible at:
-- **Landing page:** http://localhost:8080
-- **REST API:** http://localhost:8080/api/
+- **Landing page:** http://localhost:8000
+- **REST API:** http://localhost:8000/api/
+
+> 💡 To use a different port locally, run `python manage.py runserver 0.0.0.0:8080` and visit http://localhost:8080 instead.
 
 ---
 
